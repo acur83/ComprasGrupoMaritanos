@@ -69,7 +69,7 @@ class PurchaseOrder(models.Model):
         purchase order and raise an exception if not.
 
         '''
-        groups_name = ['Technical Features']
+        # groups_name = ['Technical Features']
         groups_name = []
         if self.user_department_id:
             groups_name.append(
@@ -85,8 +85,6 @@ class PurchaseOrder(models.Model):
                 self.write({'state' : 'Approved'})
                 flag = True
         if not flag:
-            # assert False, 'You have no access to confirm a\
-            #     Purchase, please contact with the department manager.'
             raise UserError(_('You have no access to confirm a\
                 Purchase, please contact with the department manager.'))
         else:
@@ -139,23 +137,11 @@ class PurchaseOrder(models.Model):
             ]
         })
         invoice.action_invoice_open()
-        # return {
-        #     'name': 'Test',
-        #     'type': 'ir.actions.act_window',
-        #     'view_type': 'form',
-        #     'view_mode': 'tree,form, search',
-        #     'res_model': 'account.invoice',
-        #     'target': 'current',
-        #     'res_id': invoice.id,
-        #     'context': { }
-        # }
-
 
 
 class HrDeparment(models.Model):
     """
     Hr Department Model customization.
-    TODO: DOCUMENT
     
     """
     _inherit = 'hr.department'
@@ -182,7 +168,6 @@ class HrDeparment(models.Model):
             'name': '{dptoName}_Purchases_User'.format(
                 dptoName=vals.get('name')),
             'category_id' : dptoCateg.id,
-            # 'implied_ids': ResGroups.search([('name', '=', 'User')])
         })
         user_domain = "[('create_uid','=',user.id)]"
         userRule = IrRule.create({
@@ -193,12 +178,10 @@ class HrDeparment(models.Model):
             'domain_force': user_domain
         })
         userRule.groups = group_user        
-        # ******************************************************************        
         group_manager = ResGroups.create({
             'name': '{dptoName}_Purchases_Manager'.format(
                 dptoName=vals.get('name')),
             'category_id' : dptoCateg.id,
-            # 'implied_ids': ResGroups.search([('name', '=', 'User')])
         })
         manager_domain = "['|', ('create_uid', '=', user.id),\
         ('user_department_id.member_ids.user_id', 'in', [user.id])]"
@@ -210,7 +193,7 @@ class HrDeparment(models.Model):
             'domain_force': manager_domain
         })
         managerRule.groups = group_manager
-        # ******************************************************************
+        # Creating the admin group and rule.
         group_admin = ResGroups.create({
             'name': '{dptoName}_Admin_Purchases'.format(
                 dptoName=vals.get('name')),
