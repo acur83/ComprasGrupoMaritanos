@@ -139,7 +139,7 @@ class PurchaseOrder(models.Model):
         invoice.action_invoice_open()
 
 
-class HrDeparment(models.Model):
+class HrDepartment(models.Model):
     """
     Hr Department Model customization.
     
@@ -207,4 +207,4 @@ class HrDeparment(models.Model):
             'domain_force': "[(1,'=',1)]"
         })
         managerRule.groups = group_admin
-        return super(HrDeparment,self).create(vals)
+        return super(HrDepartment,self).create(vals)
