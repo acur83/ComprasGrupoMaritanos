@@ -10,8 +10,7 @@
       		type="object"
       		string="Aprobar Pedido"
       		class="oe_highlight"
-      		states="purchase"
-      		/>
+      		states="purchase"/>
       </xpath>
       <xpath expr="//field[@name='partner_ref']" position="after">
         <field name="user_department_id" string="Created by Department"/>
