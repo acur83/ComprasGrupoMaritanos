@@ -100,7 +100,30 @@ class PurchaseOrder(models.Model):
         purchaseJournal = AccountJournal.search([('type','=','purchase')])
         if not purchaseJournal:
             raise UserError(_('Please create a purchase type journal.'))
-        p_expense_acc = self.order_line.product_id.property_account_expense_id
+        lines_arr = []
+        for line in self.order_line:
+            p_expense_acc = line.product_id.property_account_expense_id
+            if not p_expense_acc:
+                p_expense_acc = line.product_id.categ_id.property_account_expense_categ_id.id            
+            lines_arr.append(
+                (0, 0, {
+                    'name': line.name + ':' + line.product_id.name,
+                    'origin': line.name,
+                    'uom_id': line.product_uom.id,
+                    'product_id': line.product_id.id,
+                    'account_id': p_expense_acc,
+                    'price_unit': line.price_unit,
+                    'price_subtotal': line.price_subtotal,
+                    'price_total': line.price_total,
+                    'quantity': line.product_qty,
+                    'company_id': line.company_id.id,
+                    'partner_id': line.partner_id.id,
+                    'currency_id': line.company_id.currency_id.id,
+                    'create_uid': line.create_uid.id,
+                    'create_date': line.create_date,
+                    'write_uid': line.write_uid.id,
+                    'write_date': line.write_date,
+                    'purchase_line_id': line.id}))
         invoice = AccountInvoice.create({
             'partner_id' : self.partner_id.id,
             'currency_id' : self.company_id.currency_id.id,
@@ -114,28 +137,7 @@ class PurchaseOrder(models.Model):
             'create_date' : self.create_date,
             'write_uid' : self.write_uid.id,
             'write_date' : self.write_date,
-            'invoice_line_ids' :
-            [
-            (0, 0, {
-                'name': self.name + ':' +self.product_id.name,
-                'origin': self.name,
-                'uom_id': self.order_line.product_uom.id,
-                'product_id': self.order_line.product_id.id,
-                'account_id': p_expense_acc.id,
-                'price_unit': self.order_line.price_unit,
-                'price_subtotal': self.order_line.price_subtotal,
-                'price_total': self.order_line.price_total,
-                'quantity': self.order_line.product_qty,
-                'company_id': self.company_id.id,
-                'partner_id': self.partner_id.id,
-                'currency_id': self.company_id.currency_id.id,
-                'create_uid': self.create_uid.id,
-                'create_date': self.create_date,
-                'write_uid': self.write_uid.id,
-                'write_date': self.write_date,
-                'purchase_line_id': self.order_line.id})
-            ]
-        })
+            'invoice_line_ids' : lines_arr})
         invoice.action_invoice_open()
 
 
