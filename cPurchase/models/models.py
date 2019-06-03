@@ -139,12 +139,56 @@ class PurchaseOrder(models.Model):
         invoice.action_invoice_open()
 
 
-class HrDeparment(models.Model):
+class HrDepartment(models.Model):
     """
     Hr Department Model customization.
     
     """
     _inherit = 'hr.department'
+
+    @api.multi
+    def write(self, vals):
+        ''' Is necessary redefine because when the user change the name of
+        a department, the created groups and its rules must be updated with
+        the new name.
+
+        '''
+        IrModuleCat = self.env['ir.module.category']
+        ResGroups = self.env['res.groups']
+        IrRule = self.env['ir.rule']
+        # updating the category.
+        category = IrModuleCat.sudo().search([
+            ('name','=',self.name + " Deparment")])
+        category.name = vals.get('name') + " Deparment"
+        # updating the user group and rule
+        user_g = ResGroups.search([
+            ('name','=','{dpto}_Purchases_User'.format(dpto = self.name))])
+        user_g.name = '{dpto}_Purchases_User'.format(dpto=vals.get('name'))
+        user_rule = IrRule.search([
+            ('name','=','Custom_Purchase_User_Rule_{dpto}'.format(
+                dpto=self.name))])
+        user_rule.name = 'Custom_Purchase_User_Rule_{dpto}'.format(
+            dpto=vals.get('name'))
+        # updating the manager group and rule
+        manag_g = ResGroups.search([
+            ('name','=','{dpto}_Purchases_Manager'.format(dpto=self.name))])
+        manag_g.name = '{dpto}_Purchases_Manager'.format(dpto=vals.get('name'))
+        manag_rule = IrRule.search([
+            ('name','=', 'Custom_Purchase_Manager_Rule_{dpto}'.format(
+                dpto=self.name))])
+        manag_rule.name = 'Custom_Purchase_Manager_Rule_{dpto}'.format(
+                dpto=vals.get('name'))
+        # updating the admin group and rule
+        admin_group = ResGroups.search([
+            ('name','=', '{dpto}_Admin_Purchases'.format(dpto=self.name))])
+        admin_group.name = '{dpto}_Admin_Purchases'.format(dpto=vals.get('name'))
+        admin_rule = IrRule.search([
+            ('name', '=', 'Custom_Purchases_Admin_Rule_{dpto}'.format(
+                dpto=self.name)
+            )])
+        admin_rule.name = 'Custom_Purchases_Admin_Rule_{dpto}'.format(
+                dpto=vals.get('name'))
+        return super(HrDepartment, self).write(vals)
 
     @api.model
     def create(self, vals):
@@ -207,4 +251,4 @@ class HrDeparment(models.Model):
             'domain_force': "[(1,'=',1)]"
         })
         managerRule.groups = group_admin
-        return super(HrDeparment,self).create(vals)
+        return super(HrDepartment,self).create(vals)
