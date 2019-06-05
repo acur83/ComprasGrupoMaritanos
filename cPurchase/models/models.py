@@ -83,7 +83,7 @@ class PurchaseOrder(models.Model):
             groups_name.append(
                 self.user_department_id.name + '_Purchases_Manager')
             groups_name.append(
-                self.user_department_id.name + '_Admin_Purchases')
+                self.user_department_id.name + '_Purchases_Admin')
         manager_groups = self.env['res.groups'].search([
             ('name','in', groups_name)
         ])
@@ -202,8 +202,8 @@ class HrDepartment(models.Model):
                     dpto=vals.get('name'))
             # updating the admin group and rule
             admin_group = ResGroups.search([
-                ('name','=', '{dpto}_Admin_Purchases'.format(dpto=self.name))])
-            admin_group.name = '{dpto}_Admin_Purchases'.format(dpto=vals.get('name'))
+                ('name','=', '{dpto}_Purchases_Admin'.format(dpto=self.name))])
+            admin_group.name = '{dpto}_Purchases_Admin'.format(dpto=vals.get('name'))
             admin_rule = IrRule.search([
                 ('name', '=', 'Custom_Purchases_Admin_Rule_{dpto}'.format(
                     dpto=self.name)
@@ -260,10 +260,13 @@ class HrDepartment(models.Model):
         })
         managerRule.groups = group_manager
         # Creating the admin group and rule.
+        po_admin_group = self.env.ref('base.group_system')
         group_admin = ResGroups.create({
-            'name': '{dptoName}_Admin_Purchases'.format(
+            'name': '{dptoName}_Purchases_Admin'.format(
                 dptoName=vals.get('name')),
             'category_id' : dptoCateg.id,
+            'implied_ids' : [(4, po_admin_group.id),
+                             (4, po_manager_group.id)]
         })
         managerRule = IrRule.create({
             'name': 'Custom_Purchases_Admin_Rule_{dptoName}'.format(
