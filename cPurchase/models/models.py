@@ -17,6 +17,14 @@ from odoo import exceptions
 from openerp.osv.orm import except_orm
 from odoo.exceptions import UserError
 
+class HrEmployee(models.Model):
+    """
+    Redefined for update department field.
+    """
+    _inherit = 'hr.employee'
+
+    department_id = fields.Many2one('hr.department', required=True)
+
 class PurchaseOrder(models.Model):
     """
     Purchase Order model customization.
