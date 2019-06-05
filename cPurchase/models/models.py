@@ -231,10 +231,13 @@ class HrDepartment(models.Model):
         })
         purchase_model_id = self.env['ir.model'].search(
             [('model', '=', 'purchase.order')])
+
+        po_user_group = self.env.ref('purchase.group_purchase_user')
         group_user = ResGroups.create({
             'name': '{dptoName}_Purchases_User'.format(
                 dptoName=vals.get('name')),
             'category_id' : dptoCateg.id,
+            'implied_ids' : [(4, po_user_group.id)]
         })
         user_domain = "[('create_uid','=',user.id)]"
         userRule = IrRule.create({
@@ -244,11 +247,13 @@ class HrDepartment(models.Model):
             'groups': group_user,
             'domain_force': user_domain
         })
-        userRule.groups = group_user        
+        userRule.groups = group_user
+        po_manager_group = self.env.ref('purchase.group_purchase_manager')
         group_manager = ResGroups.create({
             'name': '{dptoName}_Purchases_Manager'.format(
                 dptoName=vals.get('name')),
             'category_id' : dptoCateg.id,
+            'implied_ids' : [(4, po_manager_group.id)]
         })
         manager_domain = "['|', ('create_uid', '=', user.id),\
         ('user_department_id.member_ids.user_id', 'in', [user.id])]"
