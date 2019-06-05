@@ -154,7 +154,8 @@ class PurchaseOrder(models.Model):
                          account_id=expense_acc.id,
                          amount= tax_amount,
                          invoice_id=invoice.id))
-            invoice.write({'residual' : sum([l.price_total
+            invoice.write({'date_invoice' : str(self.date_order.date()),
+                           'residual' : sum([l.price_total
                                              for l in self.order_line])})
             invoice.action_invoice_open()
             # invoice._compute_amount()
