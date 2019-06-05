@@ -294,3 +294,40 @@ class HrDepartment(models.Model):
         })
         managerRule.groups = group_admin
         return super(HrDepartment,self).create(vals)
+
+    @api.multi
+    def unlink(self):
+        '''Is necessary remove the related object created.
+        Remove the department category, groups and rules defined in the
+        department creation.
+
+        '''
+        IrModuleCat = self.env['ir.module.category']
+        ResGroups = self.env['res.groups']
+        IrRule = self.env['ir.rule']
+        user_g = ResGroups.search([
+            ('name','=','{dpto}_Purchases_User'.format(dpto = self.name))])
+        user_rule = IrRule.search([
+            ('name','=','Custom_Purchase_User_Rule_{dpto}'.format(
+                dpto=self.name))])
+        user_rule.unlink()
+        user_g.unlink()
+        manag_g = ResGroups.search([
+            ('name','=','{dpto}_Purchases_Manager'.format(dpto=self.name))])
+        manag_rule = IrRule.search([
+            ('name','=', 'Custom_Purchase_Manager_Rule_{dpto}'.format(
+                dpto=self.name))])
+        manag_g.unlink()
+        manag_rule.unlink()
+        admin_group = ResGroups.search([
+                ('name','=', '{dpto}_Purchases_Admin'.format(dpto=self.name))])
+        admin_rule = IrRule.search([
+                ('name', '=', 'Custom_Purchases_Admin_Rule_{dpto}'.format(
+                    dpto=self.name)
+                )])
+        admin_group.unlink()
+        admin_rule.unlink()
+        category = IrModuleCat.sudo().search([
+            ('name', '=', self.name + " Deparment")])
+        category.unlink()
+        return super(HrDepartment, self).unlink()
