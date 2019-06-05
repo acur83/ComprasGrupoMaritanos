@@ -10,7 +10,33 @@
       		type="object"
       		string="Aprobar Pedido"
       		class="oe_highlight"
+		groups="purchase.group_purchase_manager"
       		states="purchase"/>
+      </xpath>
+      <xpath expr="//header/button[@name='action_view_invoice']"
+      	     position="replace">
+	<button name="action_view_invoice" string="Create Bill" type="object"
+		class="oe_highlight" context="{'create_bill':True}"
+		groups="purchase.group_purchase_manager"
+		attrs="{'invisible': ['|', ('state', 'not in', ('purchase')), ('invoice_status', 'in', ('no', 'invoiced'))]}"/>
+
+      </xpath>
+      <xpath expr="//header/button[@name='print_quotation']"
+      	     position="replace">
+        <button name="print_quotation" string="Print RFQ" type="object"
+		states="draft" class="oe_highlight"
+		groups="purchase.group_purchase_manager"/>
+      </xpath>
+      <xpath expr="//header/button[@name='button_done']" position="attributes">
+        <attribute name="attrs">{'invisible': True}</attribute>
+      </xpath>
+      <xpath expr="//header/button[@name='action_rfq_send']"
+	     position="attributes">
+        <attribute name="attrs">{'invisible': True}</attribute>
+      </xpath>
+      <xpath expr="//header/button[@name='action_rfq_send']"
+	     position="attributes">
+        <attribute name="attrs">{'invisible': True}</attribute>
       </xpath>
       <xpath expr="//field[@name='partner_ref']" position="after">
         <field name="user_department_id" string="Created by Department"/>
