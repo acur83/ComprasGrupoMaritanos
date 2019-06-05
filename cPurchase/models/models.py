@@ -222,6 +222,7 @@ class HrDepartment(models.Model):
         IrModuleCat = self.env['ir.module.category']
         ResGroups = self.env['res.groups']
         IrRule = self.env['ir.rule']
+        ModelAccess = self.env['ir.model.access']
         dptoCateg = IrModuleCat.sudo().create({
             'name' : vals.get('name') + " Deparment",
             'description' : 'Custom Purchase {dptoName}'.format(
@@ -259,6 +260,22 @@ class HrDepartment(models.Model):
             'domain_force': manager_domain
         })
         managerRule.groups = group_manager
+        model_ids = [m.id for m in self.env['ir.model'].search(
+            ['|','|','|',
+             ('model', '=', 'account.partial.reconcile'),
+             ('model', '=', 'account.move'),
+             ('model', '=', 'account.account.type'),
+             ('model', '=', 'account.move.line')])]
+        for model in model_ids:
+            ModelAccess.create(
+                dict(name='po_manager_access_move',
+                     model_id=model,
+                     group_id=group_manager.id,
+                     perm_read=True,
+                     perm_write=True,
+                     perm_create=True,
+                     perm_unlink=True))
+
         # Creating the admin group and rule.
         po_admin_group = self.env.ref('base.group_system')
         group_admin = ResGroups.create({
