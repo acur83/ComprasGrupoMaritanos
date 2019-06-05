@@ -98,6 +98,7 @@ class PurchaseOrder(models.Model):
         AccountInvoice = self.env['account.invoice']
         AccountInvoiceLine = self.env['account.invoice.line']
         AccountJournal = self.env['account.journal']
+        AccountInvoiceTax = self.env['account.invoice.tax']
         purchaseJournal = AccountJournal.search([('type','=','purchase')])
         if not purchaseJournal:
             raise UserError(_('Please create a purchase type journal.'))
@@ -138,7 +139,17 @@ class PurchaseOrder(models.Model):
                 'invoice_line_tax_ids': [(6, 0, [t.id for t in line.taxes_id])],
                 'purchase_line_id': line.id})
             inv_line.invoice_id = invoice.id
-        invoice.action_invoice_open()
+            if line.taxes_id:
+                tax_amount = (line.price_subtotal * line.taxes_id.amount)/100
+                line_tax = AccountInvoiceTax.create(
+                    dict(name=line.taxes_id.name,
+                         account_id=expense_acc.id,
+                         amount= tax_amount,
+                         invoice_id=invoice.id))
+            invoice.write({'residual' : sum([l.price_total
+                                             for l in self.order_line])})
+            invoice.action_invoice_open()
+            # invoice._compute_amount()
 
 
 class HrDepartment(models.Model):
