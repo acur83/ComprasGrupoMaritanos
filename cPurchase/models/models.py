@@ -154,10 +154,14 @@ class PurchaseOrder(models.Model):
                          account_id=expense_acc.id,
                          amount= tax_amount,
                          invoice_id=invoice.id))
-            invoice.write({'date_invoice' : str(self.date_order.date()),
-                           'residual' : sum([l.price_total
-                                             for l in self.order_line])})
-            invoice.action_invoice_open()
+            invoice.write({'date_invoice' : str(self.date_order.date())})
+            inv_residual = sum([l.price_total for l in self.order_line])
+            # It is amazing if put the result needed like residual in the same
+            # write method call does not work ...
+            invoice.write({'residual' : inv_residual ,
+                           'residual_signed' : inv_residual,
+                           'residual_company_signed' : inv_residual
+            })
             # invoice._compute_amount()
 
 
