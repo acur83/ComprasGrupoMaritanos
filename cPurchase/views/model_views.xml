@@ -5,13 +5,59 @@
     <field name="model">purchase.order</field>
     <field name="inherit_id" ref="purchase.purchase_order_form"/>
     <field name="arch" type="xml">
-      <xpath expr="//header/button[@name='button_confirm']" position="after">
+      <xpath expr="//header" position="replace">
+	<header>
       	<button name="aprove_purchase"
       		type="object"
       		string="Aprobar Pedido"
       		class="oe_highlight"
-		groups="purchase.group_purchase_manager"
-      		states="purchase"/>
+		attrs="{'invisible': [('state', 'in', ('Approved'))]}"
+		groups="purchase.group_purchase_manager"/>
+          <button name="action_rfq_send" states="draft"
+		  groups="purchase.group_purchase_manager"
+		  string="Send by Email"
+		  type="object" context="{'send_rfq':True}" class="oe_highlight"/>
+          <button name="print_quotation" string="Print RFQ" type="object"
+		  states="draft" class="oe_highlight" groups="base.group_user"/>
+          <button name="button_confirm" type="object" states="sent"
+		  string="Confirm Order" class="oe_highlight"
+		  id="bid_confirm"/>
+          <button name="button_approve" type="object" states='to approve'
+		  string="Approve Order" class="oe_highlight"
+		  groups="purchase.group_purchase_manager"/>
+          <button name="action_view_invoice" string="Create Bill"
+		  type="object" class="oe_highlight"
+		  groups="purchase.group_purchase_manager"
+		  context="{'create_bill':True}"
+		  attrs="{'invisible': ['|', ('state', 'not in', ('purchase')), ('invoice_status', 'in', ('no', 'invoiced'))]}"/>
+          <button name="action_rfq_send" states="sent"
+		  groups="purchase.group_purchase_manager"
+		  string="Re-Send by Email" type="object"
+		  context="{'send_rfq':True}"/>
+          <button name="print_quotation" string="Print RFQ" type="object"
+		  states="sent" groups="base.group_user"/>
+          <button name="button_confirm" type="object" states="draft"
+		  string="Confirm Order" id="draft_confirm"/>
+          <button name="action_rfq_send" states="purchase"
+		  groups="purchase.group_purchase_manager"
+		  string="Send PO by Email" type="object"
+		  context="{'send_rfq':False}"/>
+          <button name="action_view_invoice" string="Create Bill"
+		  type="object" context="{'create_bill':True}"
+		  groups="purchase.group_purchase_manager"
+		  attrs="{'invisible': ['|', '|', ('state', 'not in', ('purchase')), ('invoice_status', 'not in', ('no', 'invoiced')), ('order_line', '=', [])]}"/>
+          <button name="button_draft" states="cancel" string="Set to Draft"
+		  type="object" />
+          <button name="button_cancel" string="Cancel" type="object"
+		  states="draft,to approve,sent,purchase"  />
+          <button name="button_done" type="object" string="Lock"
+		  groups="purchase.group_purchase_manager"
+		  states="purchase"/>
+          <button name="button_unlock" type="object" string="Unlock"
+		  states="done" groups="purchase.group_purchase_manager"/>
+          <field name="state" widget="statusbar"
+		 statusbar_visible="draft,sent,purchase" readonly="1"/>
+        </header>
       </xpath>
       <xpath expr="//header/button[@name='action_view_invoice']"
       	     position="replace">
