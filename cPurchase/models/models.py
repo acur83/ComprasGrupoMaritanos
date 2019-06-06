@@ -125,8 +125,14 @@ class PurchaseOrder(models.Model):
             'write_date' : self.write_date})
         for line in self.order_line:
             expense_acc = line.product_id.property_account_expense_id
-            if not expense_acc:
-                expense_acc = line.product_id.categ_id.property_account_expense_categ_id
+            prod_categ = line.product_id.categ_id
+            while not expense_acc and prod_categ:
+                if prod_categ.property_account_expense_categ_id:
+                    expense_acc = prod_categ.property_account_expense_categ_id
+                if prod_categ.parent_id:
+                    prod_categ = prod_categ.parent_id
+                else:
+                    prod_categ = False
             inv_line = AccountInvoiceLine.create({
                 'name': line.name + ':' + line.product_id.name,
                 'origin': line.name,
