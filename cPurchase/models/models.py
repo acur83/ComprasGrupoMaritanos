@@ -16,6 +16,7 @@ from openerp.tools.translate import _
 from odoo import exceptions
 from openerp.osv.orm import except_orm
 from odoo.exceptions import UserError
+from odoo.addons import decimal_precision as dp
 
 class HrEmployee(models.Model):
     """
@@ -24,6 +25,86 @@ class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
     department_id = fields.Many2one('hr.department', required=True)
+
+class AccountInvoiceLine(models.Model):
+    """
+    Account Invoice Line model customization.
+
+    """
+    _inherit = 'account.invoice.line'
+
+    computed_quantity = fields.Float(compute='_get_quantity',
+                                     store=True,
+                                     string='Quantity')
+
+    @api.model
+    def create(self, vals):        
+        invoice_line = super(AccountInvoiceLine,self).create(vals)
+        invoice_line.write({'quantity': invoice_line.computed_quantity})
+        #tax_amount = (line.price_subtotal * line.taxes_id.amount)/100
+        AccountInvoiceTax = self.env['account.invoice.tax']
+        line_tax = AccountInvoiceTax.create(
+            dict(name='',
+                 account_id=invoice_line.account_id.id,
+                 amount= 1,
+                 invoice_id=invoice_line.invoice_id.id))
+        return invoice_line
+
+    # quantity = fields.Float(string='Quantity',
+    #                         digits=dp.get_precision('Product Unit of Measure'),
+    #                         related='computed_quantity',
+    #                         store=True, default=1)
+
+    # @api.onchange('quantity') # if these fields are changed, call method
+    # def check_change(self):
+    #     self.qty_received = self.quantity
+
+    @api.depends('product_id')
+    def _get_quantity(self):
+        for record in self:
+            record.computed_quantity = record.purchase_line_id.product_qty
+            # record.quantity = record.purchase_line_id.product_qty
+
+
+class AccountInvoice(models.Model):
+    """
+    Account Invoice model customization.
+    """
+    _inherit = 'account.invoice'
+
+    # origin = fields.Char(readonly=True, string='Source Document',
+    #                      help="Reference of the document that produced this invoice.",
+    #                      states={'draft': [('readonly', True)]})
+
+    @api.multi
+    def _get_purchase_origin(self, purchase_name):
+        '''Fing the origin in the case of Purchase Order
+        '''
+        PurchaseOrder = self.env['purchase.order']
+        return PurchaseOrder.search([('name', '=', purchase_name)])
+
+    @api.model
+    def create(self, vals):
+        invoice = super(AccountInvoice,self).create(vals)
+        if (self.env.context.get('active_model', False) == 'purchase.order'
+            and invoice.origin):
+            purchase = self._get_purchase_origin(invoice.origin)
+            if any(purchase):
+                invoice.date_invoice = str(purchase.date_order.date())
+                purchase.write({'state' : 'invoiced'})
+        invoice.action_invoice_open()
+        invoice._compute_amount()
+        return invoice
+
+    @api.multi
+    def write(self, vals):
+        if vals.get('state', False):
+            if vals['state'] == 'paid':
+                purchase_origin = self._get_purchase_origin(self.origin)
+                if any(purchase_origin):
+                    purchase_origin.write({'state' : 'purchase_done'})
+        return super(AccountInvoice, self).write(vals)
+
 
 class PurchaseOrder(models.Model):
     """
@@ -38,6 +119,8 @@ class PurchaseOrder(models.Model):
                               ('to approve', 'To Approve'),
                               ('purchase', 'Purchase Order'),
                               ('Approved', 'Approved'),
+                              ('purchase_done', 'Done'),
+                              ('invoiced', 'Invoiced'),
                               ('done', 'Locked'),
                               ('cancel', 'Cancelled')],
                              string='Status', readonly=True,
@@ -57,18 +140,6 @@ class PurchaseOrder(models.Model):
             raise exceptions.ValidationError(
                 _('Please select a Department for the logged user.'))
         return super(PurchaseOrder,self).create(vals)
-
-    @api.multi
-    def action_view_invoice(self):
-        '''Is needed redefine for avoid that the user can create a bill
-        without a department manager approved.
-
-        '''
-        if self.state == 'Approved':
-            return super(PurchaseOrder,self).action_view_invoice()
-        else:
-            raise exceptions.ValidationError(_('"Error"\
-            Please aprove the purchase first..'))
 
     @api.one
     def aprove_purchase(self):

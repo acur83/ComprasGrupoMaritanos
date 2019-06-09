@@ -7,12 +7,6 @@
     <field name="arch" type="xml">
       <xpath expr="//header" position="replace">
 	<header>
-      	<button name="aprove_purchase"
-      		type="object"
-      		string="Aprobar Pedido"
-      		class="oe_highlight"
-		attrs="{'invisible': [('state', 'in', ('Approved'))]}"
-		groups="purchase.group_purchase_manager"/>
           <button name="action_rfq_send" states="draft"
 		  groups="purchase.group_purchase_manager"
 		  string="Send by Email"
@@ -25,11 +19,12 @@
           <button name="button_approve" type="object" states='to approve'
 		  string="Approve Order" class="oe_highlight"
 		  groups="purchase.group_purchase_manager"/>
-          <button name="action_view_invoice" string="Create Bill"
+          <button name="action_view_invoice"
+		  string="Aprobar Pedido"
 		  type="object" class="oe_highlight"
 		  groups="purchase.group_purchase_manager"
 		  context="{'create_bill':True}"
-		  attrs="{'invisible': ['|', ('state', 'not in', ('purchase')), ('invoice_status', 'in', ('no', 'invoiced'))]}"/>
+		  attrs="{'invisible': [('state','in',('draft','purchase','purchase_done', 'invoiced'))]}"/>
           <button name="action_rfq_send" states="sent"
 		  groups="purchase.group_purchase_manager"
 		  string="Re-Send by Email" type="object"
@@ -42,7 +37,9 @@
 		  groups="purchase.group_purchase_manager"
 		  string="Send PO by Email" type="object"
 		  context="{'send_rfq':False}"/>
-          <button name="action_view_invoice" string="Create Bill"
+          <button name="action_view_invoice"
+		  string="Aprobar Pedido"
+		  class="oe_highlight"
 		  type="object" context="{'create_bill':True}"
 		  groups="purchase.group_purchase_manager"
 		  attrs="{'invisible': ['|', '|', ('state', 'not in', ('purchase')), ('invoice_status', 'not in', ('no', 'invoiced')), ('order_line', '=', [])]}"/>
@@ -51,9 +48,11 @@
           <button name="button_cancel" string="Cancel" type="object"
 		  states="draft,to approve,sent,purchase"  />
           <button name="button_done" type="object" string="Lock"
-		  groups="purchase.group_purchase_manager"
-		  states="purchase"/>
+		  invisible="1"
+	  	  groups="purchase.group_purchase_manager"
+	  	  states="purchase"/>
           <button name="button_unlock" type="object" string="Unlock"
+		  attrs="{'invisible': True}"
 		  states="done" groups="purchase.group_purchase_manager"/>
           <field name="state" widget="statusbar"
 		 statusbar_visible="draft,sent,purchase" readonly="1"/>
@@ -89,4 +88,53 @@
       </xpath>
     </field>
   </record>
+
+  <record id="action_account_invoice_payment" model="ir.actions.act_window">
+    <field name="name">Register Payment</field>
+    <field name="res_model">account.payment</field>
+    <field name="view_type">form</field>
+    <field name="view_mode">form</field>
+    <field name="view_id" ref="account.view_account_payment_invoice_form"/>
+    <field name="context">{'default_invoice_ids': [(4, active_id, None)]}</field>
+    <field name="target">new</field>
+  </record>
+
+  <record id="action_account_invoice_refund" model="ir.actions.act_window">
+    <field name="name">Credit Note</field>
+    <field name="res_model">account.invoice.refund</field>
+    <field name="view_type">form</field>
+    <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="account.view_account_invoice_refund"/>
+    <field name="target">new</field>
+  </record>
+
+  <record id="view_account_invoice_inh" model="ir.ui.view">
+    <field name="name">account.invoice.inh.view</field>
+    <field name="model">account.invoice</field>
+    <field name="inherit_id" ref="account.invoice_supplier_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//header" position="replace">
+	<header>
+          <button name="%(action_account_invoice_payment)d" type="action"
+		  states="open" string="Register Payment"
+		  groups="account.group_account_invoice"
+		  class="oe_highlight"/>
+          <button name="%(action_account_invoice_refund)d"
+		  type='action' string='Ask for a Credit Note'
+		  groups="account.group_account_invoice"
+		  attrs="{'invisible': ['|',('type', 'in', ['in_refund','out_refund']),('state','not in',('open','in_payment','paid'))]}"/>
+          <button name="action_invoice_draft" states="cancel"
+	  	  string="Set to Draft" type="object"
+	  	  groups="account.group_account_invoice"/>
+          <field name="state" widget="statusbar"
+		 statusbar_visible="draft,open,paid" />
+        </header>
+      </xpath>
+      <xpath expr="//sheet/notebook/page/field/tree/field[@name='quantity']"
+      	     position="before">
+      	<field name="computed_quantity" string="Comp Quantity"/>
+      </xpath>
+    </field>
+  </record>
+
 </odoo>
