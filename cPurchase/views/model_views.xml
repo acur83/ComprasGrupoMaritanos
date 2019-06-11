@@ -132,7 +132,7 @@
       </xpath>
       <xpath expr="//sheet/notebook/page/field/tree/field[@name='quantity']"
       	     position="replace">
-      	<field name="computed_quantity" string="Quantity"/>
+      	<field name="computed_quantity" string="Cantidad"/>
       </xpath>
     </field>
   </record>
