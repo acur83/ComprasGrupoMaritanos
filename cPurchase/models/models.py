@@ -41,12 +41,13 @@ class AccountInvoiceLine(models.Model):
     def create(self, vals):        
         invoice_line = super(AccountInvoiceLine,self).create(vals)
         invoice_line.write({'quantity': invoice_line.computed_quantity})
-        #tax_amount = (line.price_subtotal * line.taxes_id.amount)/100
+        tax_amount = (
+            invoice_line.price_subtotal * invoice_line.invoice_line_tax_ids.amount)/100
         AccountInvoiceTax = self.env['account.invoice.tax']
         line_tax = AccountInvoiceTax.create(
-            dict(name='',
+            dict(name=invoice_line.invoice_line_tax_ids.name,
                  account_id=invoice_line.account_id.id,
-                 amount= 1,
+                 amount= tax_amount,
                  invoice_id=invoice_line.invoice_id.id))
         return invoice_line
 
@@ -94,6 +95,7 @@ class AccountInvoice(models.Model):
                 purchase.write({'state' : 'invoiced'})
         invoice.action_invoice_open()
         invoice._compute_amount()
+        [l.unlink() for l in invoice.tax_line_ids if l.amount==0]
         return invoice
 
     @api.multi
