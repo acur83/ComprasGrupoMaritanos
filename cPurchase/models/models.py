@@ -143,6 +143,14 @@ class PurchaseOrder(models.Model):
                 _('Please select a Department for the logged user.'))
         return super(PurchaseOrder,self).create(vals)
 
+    @api.multi
+    def button_approve(self, force=False):
+        self.write({'state': 'purchase',
+                    'date_approve': fields.Date.context_today(self)})
+        # self.filtered(lambda p: p.company_id.po_lock == 'lock').write(
+        #     {'state': 'done'})
+        return {}
+
     @api.one
     def aprove_purchase(self):
         ''' Confirm the purchase.
