@@ -51,20 +51,10 @@ class AccountInvoiceLine(models.Model):
                  invoice_id=invoice_line.invoice_id.id))
         return invoice_line
 
-    # quantity = fields.Float(string='Quantity',
-    #                         digits=dp.get_precision('Product Unit of Measure'),
-    #                         related='computed_quantity',
-    #                         store=True, default=1)
-
-    # @api.onchange('quantity') # if these fields are changed, call method
-    # def check_change(self):
-    #     self.qty_received = self.quantity
-
     @api.depends('product_id')
     def _get_quantity(self):
         for record in self:
             record.computed_quantity = record.purchase_line_id.product_qty
-            # record.quantity = record.purchase_line_id.product_qty
 
 
 class AccountInvoice(models.Model):
@@ -72,10 +62,6 @@ class AccountInvoice(models.Model):
     Account Invoice model customization.
     """
     _inherit = 'account.invoice'
-
-    # origin = fields.Char(readonly=True, string='Source Document',
-    #                      help="Reference of the document that produced this invoice.",
-    #                      states={'draft': [('readonly', True)]})
 
     @api.multi
     def _get_purchase_origin(self, purchase_name):
@@ -138,7 +124,9 @@ class PurchaseOrder(models.Model):
             if order.company_id.po_double_validation == 'one_step'\
                     or (order.company_id.po_double_validation == 'two_step'\
                         and order.amount_total < self.env.user.company_id.currency_id._convert(
-                            order.company_id.po_double_validation_amount, order.currency_id, order.company_id, order.date_order or fields.Date.today()))\
+                            order.company_id.po_double_validation_amount,
+                            order.currency_id, order.company_id,
+                            order.date_order or fields.Date.today()))\
                     or order.user_has_groups('purchase.group_purchase_manager'):
                 order.button_approve()
             else:
