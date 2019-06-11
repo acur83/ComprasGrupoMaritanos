@@ -24,7 +24,7 @@ class HrEmployee(models.Model):
     """
     _inherit = 'hr.employee'
 
-    department_id = fields.Many2one('hr.department', required=True)
+    department_id = fields.Many2one('hr.department', on_delete="set null")
 
 class AccountInvoiceLine(models.Model):
     """
@@ -448,7 +448,7 @@ class HrDepartment(models.Model):
                 )])
         admin_group.unlink()
         admin_rule.unlink()
-        category = IrModuleCat.sudo().search([
-            ('name', '=', self.name + " Deparment")])
-        category.unlink()
+        # category = IrModuleCat.sudo().search([
+        #     ('name', '=', self.name + " Deparment")])
+        # category.unlink()
         return super(HrDepartment, self).unlink()
