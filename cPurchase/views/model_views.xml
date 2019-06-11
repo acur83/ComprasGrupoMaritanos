@@ -131,8 +131,8 @@
         </header>
       </xpath>
       <xpath expr="//sheet/notebook/page/field/tree/field[@name='quantity']"
-      	     position="before">
-      	<field name="computed_quantity" string="Comp Quantity"/>
+      	     position="replace">
+      	<field name="computed_quantity" string="Quantity"/>
       </xpath>
     </field>
   </record>
