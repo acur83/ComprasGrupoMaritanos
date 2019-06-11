@@ -38,7 +38,12 @@ class AccountInvoiceLine(models.Model):
                                      string='Quantity')
 
     @api.model
-    def create(self, vals):        
+    def create(self, vals):
+        '''Set the quantity value.
+        Also create the relationship between the invoice and the
+        account.invoice.tax using the invoice line fields.
+
+        '''
         invoice_line = super(AccountInvoiceLine,self).create(vals)
         invoice_line.write({'quantity': invoice_line.computed_quantity})
         tax_amount = (
@@ -53,6 +58,7 @@ class AccountInvoiceLine(models.Model):
 
     @api.depends('product_id')
     def _get_quantity(self):
+        '''Calculate the product quantity using the purchase line object. '''
         for record in self:
             record.computed_quantity = record.purchase_line_id.product_qty
 
@@ -65,13 +71,17 @@ class AccountInvoice(models.Model):
 
     @api.multi
     def _get_purchase_origin(self, purchase_name):
-        '''Fing the origin in the case of Purchase Order
+        '''Find and return the origin in the case of Purchase Order.
         '''
         PurchaseOrder = self.env['purchase.order']
         return PurchaseOrder.search([('name', '=', purchase_name)])
 
     @api.model
     def create(self, vals):
+        '''Find the related Purchase Order and set the invoiced state.
+        Also update in the new invoice the field date_invoice obtained from
+        the Purchase Order.
+        '''
         invoice = super(AccountInvoice,self).create(vals)
         if (self.env.context.get('active_model', False) == 'purchase.order'
             and invoice.origin):
@@ -81,11 +91,16 @@ class AccountInvoice(models.Model):
                 purchase.write({'state' : 'invoiced'})
         invoice.action_invoice_open()
         invoice._compute_amount()
+        # remove the account.invoice.tax with amount equal 0
         [l.unlink() for l in invoice.tax_line_ids if l.amount==0]
         return invoice
 
     @api.multi
     def write(self, vals):
+        '''Change the Purchase Order state to done when the user paid the
+        invoice.
+
+        '''
         if vals.get('state', False):
             if vals['state'] == 'paid':
                 purchase_origin = self._get_purchase_origin(self.origin)
@@ -116,6 +131,9 @@ class PurchaseOrder(models.Model):
                              default='draft', track_visibility='onchange')
     @api.multi
     def button_confirm(self):
+        ''' Set the needed state purchase.
+        The odoo default behavior set the state 'to approve'.
+        '''
         for order in self:
             if order.state not in ['draft', 'sent']:
                 continue
@@ -150,10 +168,11 @@ class PurchaseOrder(models.Model):
 
     @api.multi
     def button_approve(self, force=False):
+        ''' Redefined for avoid the odoo default behavior who write the
+        state 'done'('block').
+        '''
         self.write({'state': 'purchase',
                     'date_approve': fields.Date.context_today(self)})
-        # self.filtered(lambda p: p.company_id.po_lock == 'lock').write(
-        #     {'state': 'done'})
         return {}
 
     @api.one
