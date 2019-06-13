@@ -448,7 +448,7 @@ class HrDepartment(models.Model):
                 )])
         admin_group.unlink()
         admin_rule.unlink()
-        # category = IrModuleCat.sudo().search([
-        #     ('name', '=', self.name + " Deparment")])
-        # category.unlink()
+        category = IrModuleCat.sudo().search([
+            ('name', '=', self.name + " Deparment")])
+        category.unlink()
         return super(HrDepartment, self).unlink()
