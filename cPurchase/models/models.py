@@ -404,7 +404,8 @@ class HrDepartment(models.Model):
                 dptoName=vals.get('name')),
             'category_id' : dptoCateg.id,
             'implied_ids' : [(4, po_admin_group.id),
-                             (4, po_manager_group.id)]
+                             (4, po_manager_group.id),
+                             (4, group_manager.id)]
         })
         managerRule = IrRule.create({
             'name': 'Custom_Purchases_Admin_Rule_{dptoName}'.format(
