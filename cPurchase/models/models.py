@@ -417,6 +417,7 @@ class HrDepartment(models.Model):
         managerRule.groups = group_admin
         return super(HrDepartment,self).create(vals)
 
+    @api.one
     @api.multi
     def unlink(self):
         '''Is necessary remove the related object created.
